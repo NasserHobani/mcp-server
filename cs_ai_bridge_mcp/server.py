@@ -5,6 +5,7 @@ import os
 from typing import Any
 
 import httpx
+import redis
 from fastmcp import FastMCP
 
 
@@ -27,6 +28,33 @@ def _load_cookie_header() -> dict[str, str]:
     if not cookie:
         return {}
     return {"Cookie": cookie}
+
+
+def _get_redis_client() -> redis.Redis:
+    redis_url = os.getenv("CS_AI_BRIDGE_REDIS_URL", "").strip()
+    if not redis_url:
+        raise ValueError("CS_AI_BRIDGE_REDIS_URL is required for metadata lookup.")
+    return redis.Redis.from_url(redis_url, decode_responses=True)
+
+
+def _schema_key(tenant: str) -> str:
+    prefix = os.getenv("CS_AI_BRIDGE_SCHEMA_KEY_PREFIX", "cs_ai_bridge:schema")
+    return f"{prefix}:{tenant}"
+
+
+def _read_schema_metadata(tenant: str) -> dict[str, Any]:
+    client = _get_redis_client()
+    key = _schema_key(tenant)
+    raw = client.get(key)
+    if raw is None:
+        raise ValueError(f"Schema metadata not found in Redis for tenant '{tenant}'.")
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON schema metadata in Redis key '{key}'.") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError(f"Schema metadata in Redis key '{key}' must be a JSON object.")
+    return parsed
 
 
 def _load_odoo_credentials() -> dict[str, str] | None:
@@ -94,6 +122,17 @@ def _request(
 
 
 mcp = FastMCP("cs-ai-bridge")
+
+
+@mcp.tool(
+    name="get_schema_metadata",
+    description=(
+        "Read tenant schema metadata JSON from Redis key "
+        "`cs_ai_bridge:schema:<tenant>`."
+    ),
+)
+def get_schema_metadata(tenant: str) -> dict[str, Any]:
+    return _read_schema_metadata(tenant)
 
 
 @mcp.tool(

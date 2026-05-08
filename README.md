@@ -26,6 +26,8 @@ Copy `.env.example` to `.env` and fill values:
 
 - `CS_AI_BRIDGE_BASE_URL` - Odoo base URL (default `http://localhost:8069`)
 - `CS_AI_BRIDGE_TIMEOUT` - request timeout in seconds
+- `CS_AI_BRIDGE_REDIS_URL` - Redis URL for schema metadata (example `redis://localhost:6379/0`)
+- `CS_AI_BRIDGE_SCHEMA_KEY_PREFIX` - metadata key prefix (default `cs_ai_bridge:schema`)
 - `CS_AI_BRIDGE_ODOO_EMAIL` - Odoo user login email
 - `CS_AI_BRIDGE_ODOO_DB_NAME` - Odoo database name
 - `CS_AI_BRIDGE_ODOO_PASSWORD` - Odoo user password
@@ -66,6 +68,14 @@ Arguments:
 - `fields` (optional)
 - `limit` (optional, default `80`)
 - `order` (optional)
+
+### `get_schema_metadata`
+
+Arguments:
+
+- `tenant` (required)
+
+Reads Redis key `cs_ai_bridge:schema:<tenant>` (or custom prefix from `CS_AI_BRIDGE_SCHEMA_KEY_PREFIX`) and returns parsed JSON metadata.
 
 ### `ai_query`
 

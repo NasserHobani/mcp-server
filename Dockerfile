@@ -5,10 +5,13 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-COPY pyproject.toml README.md /app/
+COPY requirements.txt pyproject.toml README.md /app/
 COPY cs_ai_bridge_mcp /app/cs_ai_bridge_mcp
 
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir .
 
-CMD fastmcp run cs_ai_bridge_mcp/server.py:mcp --transport streamable-http --host 0.0.0.0 --port 8000
+EXPOSE 8000
+
+CMD ["fastmcp", "run", "cs_ai_bridge_mcp/server.py:mcp", "--transport", "http", "--port", "8000"]
