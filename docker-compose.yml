@@ -5,5 +5,11 @@ services:
       dockerfile: Dockerfile
     container_name: cs-ai-bridge-mcp
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      CS_AI_BRIDGE_BASE_URL: ${CS_AI_BRIDGE_BASE_URL:-http://host.docker.internal:8069}
+      CS_AI_BRIDGE_TIMEOUT: ${CS_AI_BRIDGE_TIMEOUT:-30}
+      CS_AI_BRIDGE_ODOO_EMAIL: ${CS_AI_BRIDGE_ODOO_EMAIL:-}
+      CS_AI_BRIDGE_ODOO_DB_NAME: ${CS_AI_BRIDGE_ODOO_DB_NAME:-}
+      CS_AI_BRIDGE_ODOO_PASSWORD: ${CS_AI_BRIDGE_ODOO_PASSWORD:-}
+      CS_AI_BRIDGE_COOKIE: ${CS_AI_BRIDGE_COOKIE:-}
+      CS_AI_BRIDGE_HEADERS_JSON: ${CS_AI_BRIDGE_HEADERS_JSON:-{}}
