@@ -84,6 +84,54 @@ def validate_hints_with_schema(
                 )
 
 
+def validate_create_vals_with_schema(
+    schema: dict[str, Any],
+    tenant: str | None,
+    model: str | None,
+    vals: dict[str, Any],
+) -> None:
+    if not model:
+        raise ValueError("Model is required for MCP create.")
+
+    if tenant:
+        cached_tenant = schema.get("tenant")
+        if isinstance(cached_tenant, str) and cached_tenant != tenant:
+            raise ValueError(
+                f"Schema tenant mismatch key vs payload: "
+                f"expected '{tenant}', got '{cached_tenant}'."
+            )
+
+    models = schema.get("models")
+    if not isinstance(models, dict):
+        raise ValueError("Schema metadata invalid: missing 'models' mapping.")
+
+    meta = models.get(model)
+    if not meta:
+        raise ValueError(f"Model '{model}' not allowed by schema whitelist.")
+    if not isinstance(meta, dict):
+        raise ValueError(f"Schema metadata for model '{model}' is invalid.")
+    ops = meta.get("operations", {})
+    if not isinstance(ops, dict) or not ops.get("create"):
+        raise ValueError(
+            f"Model '{model}' does not permit create operations in MCP schema whitelist."
+        )
+
+    fld = meta.get("fields", {})
+    if not isinstance(fld, dict):
+        raise ValueError(f"Schema metadata for model '{model}' lacks field entries.")
+
+    for field_name in vals:
+        info = fld.get(field_name)
+        if not info:
+            raise ValueError(
+                f"Field '{field_name}' not allowed on model '{model}' for create."
+            )
+        if not isinstance(info, dict):
+            raise ValueError(f"Invalid schema field definition for '{field_name}'.")
+        if info.get("readonly"):
+            raise ValueError(f"Cannot set readonly field '{field_name}' via MCP create.")
+
+
 def ai_hints_validation_enabled(flag: bool | None) -> bool:
     if flag is not None:
         return flag

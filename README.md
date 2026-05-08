@@ -2,8 +2,9 @@
 
 FastMCP server compatible with `cs_ai_bridge` API:
 
-- `POST /cs_ai_bridge/mcp/query`
-- `POST /cs_ai_bridge/ai/query`
+- `POST /cs_ai_bridge/mcp/query` (read / `search_read`)
+- `POST /cs_ai_bridge/mcp/create` (create; requires `Allow Create` + whitelisted writable fields in Odoo)
+- `POST /cs_ai_bridge/ai/query` (router): `route=mcp` still uses **read** unless the orchestrator returns `mcp_operation` / `mcp` + `operation: create` and `vals`; use **`mcp_create`** for direct creates.
 
 ## Requirements
 
@@ -82,6 +83,18 @@ Arguments:
 - `tenant` (required)
 
 Reads Redis key `cs_ai_bridge:schema:<tenant>` (or custom prefix from `CS_AI_BRIDGE_SCHEMA_KEY_PREFIX`) and returns parsed JSON metadata.
+
+### `mcp_create`
+
+Arguments:
+
+- `model` (required)
+- `vals` (required): Odoo-style `create` dictionary (e.g. `invoice_line_ids` with `[Command.create({...})]` or legacy `(0, 0, vals)` tuples—match your Odoo version)
+- `tenant` (optional)
+- `reuse_cached_schema` (optional)
+- `validate_with_schema` (optional): default follows `CS_AI_BRIDGE_AI_VALIDATE_SCHEMA`
+
+Natural-language “create an invoice” flows should resolve **partner/product names to numeric IDs** before calling this (e.g. via `mcp_query` on `res.partner` / `product.product`).
 
 ### `ai_query`
 
