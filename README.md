@@ -28,6 +28,12 @@ Copy `.env.example` to `.env` and fill values:
 - `CS_AI_BRIDGE_TIMEOUT` - request timeout in seconds
 - `CS_AI_BRIDGE_REDIS_URL` - Redis URL for schema metadata (example `redis://localhost:6379/0`)
 - `CS_AI_BRIDGE_SCHEMA_KEY_PREFIX` - metadata key prefix (default `cs_ai_bridge:schema`)
+- `CS_AI_BRIDGE_SCHEMA_CACHE_TTL_SECONDS` - optional in-process TTL (seconds); `0` means always bypass cache on reads that skip TTL (see tools)
+- `CS_AI_BRIDGE_REDIS_SCHEMA_CHANNEL` - Redis Pub/Sub channel Odoo publishes schema on (default `odoo.mcp.schema`)
+- `CS_AI_BRIDGE_SCHEMA_PUBSUB` - set `1` to subscribe and invalidate cached schema when Odoo publishes updates
+- `CS_AI_BRIDGE_TENANT` - fallback tenant/database name when a tool omits `tenant`
+- `CS_AI_BRIDGE_AI_VALIDATE_SCHEMA` - validate `model`/`fields`/`domain` against Redis schema before `ai_query` (`true` by default)
+- `CS_AI_BRIDGE_AI_REUSE_SCHEMA_CACHE` - set `true`/`1` to allow `ai_query` to reuse a warm in-process snapshot when `CS_AI_BRIDGE_SCHEMA_CACHE_TTL_SECONDS` > 0 (default tool behavior still bypasses TTL cache unless this is enabled or `reuse_cached_schema=true` on the tool)
 - `CS_AI_BRIDGE_ODOO_EMAIL` - Odoo user login email
 - `CS_AI_BRIDGE_ODOO_DB_NAME` - Odoo database name
 - `CS_AI_BRIDGE_ODOO_PASSWORD` - Odoo user password
@@ -87,3 +93,7 @@ Arguments:
 - `model` (optional)
 - `domain` (optional)
 - `fields` (optional)
+- `reuse_cached_schema` (optional, default `false`) - when `true` (or when `CS_AI_BRIDGE_AI_REUSE_SCHEMA_CACHE` is enabled), use a warm in-process snapshot whenever `CS_AI_BRIDGE_SCHEMA_CACHE_TTL_SECONDS` > 0
+- `validate_hints_with_schema` (optional) - override `CS_AI_BRIDGE_AI_VALIDATE_SCHEMA` when not `null`
+
+Before calling Odoo, the server resolves the tenant (`tenant` argument, then `CS_AI_BRIDGE_TENANT`, then `CS_AI_BRIDGE_ODOO_DB_NAME`) and pulls the schema JSON from Redis (`cs_ai_bridge:schema:<tenant>`). With the default (`reuse_cached_schema=false` and no reuse env), cached entries for that tenant are cleared so each `ai_query` reads Redis again immediately after Odoo publishes an update.
