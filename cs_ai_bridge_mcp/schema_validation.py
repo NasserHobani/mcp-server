@@ -130,6 +130,59 @@ def validate_create_vals_with_schema(
             raise ValueError(f"Invalid schema field definition for '{field_name}'.")
         if info.get("readonly"):
             raise ValueError(f"Cannot set readonly field '{field_name}' via MCP create.")
+        # Mirror Odoo `_field_schema_entry` ``can_write`` (older cached schemas omit key).
+        if info.get("can_write") is False:
+            raise ValueError(f"Field '{field_name}' is not writable via MCP create (schema mutation).")
+
+
+def validate_write_vals_with_schema(
+    schema: dict[str, Any],
+    tenant: str | None,
+    model: str | None,
+    vals: dict[str, Any],
+) -> None:
+    if not model:
+        raise ValueError("Model is required for MCP write.")
+
+    if tenant:
+        cached_tenant = schema.get("tenant")
+        if isinstance(cached_tenant, str) and cached_tenant != tenant:
+            raise ValueError(
+                f"Schema tenant mismatch key vs payload: "
+                f"expected '{tenant}', got '{cached_tenant}'."
+            )
+
+    models = schema.get("models")
+    if not isinstance(models, dict):
+        raise ValueError("Schema metadata invalid: missing 'models' mapping.")
+
+    meta = models.get(model)
+    if not meta:
+        raise ValueError(f"Model '{model}' not allowed by schema whitelist.")
+    if not isinstance(meta, dict):
+        raise ValueError(f"Schema metadata for model '{model}' is invalid.")
+    ops = meta.get("operations", {})
+    if not isinstance(ops, dict) or not ops.get("write"):
+        raise ValueError(
+            f"Model '{model}' does not permit write operations in MCP schema whitelist."
+        )
+
+    fld = meta.get("fields", {})
+    if not isinstance(fld, dict):
+        raise ValueError(f"Schema metadata for model '{model}' lacks field entries.")
+
+    for field_name in vals:
+        info = fld.get(field_name)
+        if not info:
+            raise ValueError(
+                f"Field '{field_name}' not allowed on model '{model}' for write."
+            )
+        if not isinstance(info, dict):
+            raise ValueError(f"Invalid schema field definition for '{field_name}'.")
+        if info.get("readonly"):
+            raise ValueError(f"Cannot set readonly field '{field_name}' via MCP write.")
+        if info.get("can_write") is False:
+            raise ValueError(f"Field '{field_name}' is not writable via MCP write (schema mutation).")
 
 
 def ai_hints_validation_enabled(flag: bool | None) -> bool:

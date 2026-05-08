@@ -3,8 +3,9 @@
 FastMCP server compatible with `cs_ai_bridge` API:
 
 - `POST /cs_ai_bridge/mcp/query` (read / `search_read`)
-- `POST /cs_ai_bridge/mcp/create` (create; requires `Allow Create` + whitelisted writable fields in Odoo)
-- `POST /cs_ai_bridge/ai/query` (router): `route=mcp` still uses **read** unless the orchestrator returns `mcp_operation` / `mcp` + `operation: create` and `vals`; use **`mcp_create`** for direct creates.
+- `POST /cs_ai_bridge/mcp/create` (create; whitelist + `mutation.create`)
+- `POST /cs_ai_bridge/mcp/write` (update one row + `mutation.write.updatable_fields`)
+- `POST /cs_ai_bridge/ai/query` (router): `route=mcp` uses **read** unless `action` is `create`/`write` with matching `values` (and `record_id` on write)—or use **`mcp_create`** / **`mcp_write`** directly.
 
 ## Requirements
 
@@ -96,6 +97,15 @@ Arguments:
 
 Natural-language “create an invoice” flows should resolve **partner/product names to numeric IDs** before calling this (e.g. via `mcp_query` on `res.partner` / `product.product`).
 
+### `mcp_write`
+
+Arguments:
+
+- `model` (required)
+- `record_id` (required)
+- `vals` (required) Odoo write dict (`vals`/`values` on HTTP)
+- `tenant` / `reuse_cached_schema` / `validate_with_schema` — same semantics as `mcp_create`
+
 ### `ai_query`
 
 Arguments:
@@ -108,5 +118,10 @@ Arguments:
 - `fields` (optional)
 - `reuse_cached_schema` (optional, default `false`) - when `true` (or when `CS_AI_BRIDGE_AI_REUSE_SCHEMA_CACHE` is enabled), use a warm in-process snapshot whenever `CS_AI_BRIDGE_SCHEMA_CACHE_TTL_SECONDS` > 0
 - `validate_hints_with_schema` (optional) - override `CS_AI_BRIDGE_AI_VALIDATE_SCHEMA` when not `null`
+- `action` (optional) - `create` or `write` (with **`record_id`** for write)
+- `values` (optional) - forwarded as Odoo **`values`**
+- `record_id` (optional) — forwarded when writing
+
+Also pass **`action="create"`** and **`values={...}`** (Odoo create dict, same keys as MCP Create) plus **`route="mcp"`** and **`model`** when the caller already resolved structured create payloads.
 
 Before calling Odoo, the server resolves the tenant (`tenant` argument, then `CS_AI_BRIDGE_TENANT`, then `CS_AI_BRIDGE_ODOO_DB_NAME`) and pulls the schema JSON from Redis (`cs_ai_bridge:schema:<tenant>`). With the default (`reuse_cached_schema=false` and no reuse env), cached entries for that tenant are cleared so each `ai_query` reads Redis again immediately after Odoo publishes an update.
