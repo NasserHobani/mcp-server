@@ -11,4 +11,4 @@ COPY cs_ai_bridge_mcp /app/cs_ai_bridge_mcp
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir .
 
-CMD ["python", "-m", "cs_ai_bridge_mcp.server"]
+CMD ["fastmcp", "run", "cs_ai_bridge_mcp.server:mcp", "--transport", "http", "--port", "8000"]
