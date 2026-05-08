@@ -112,7 +112,7 @@ def _request(
         # If no explicit cookie was provided, try credential login to create session.
         if "Cookie" not in headers:
             _authenticate_odoo(client, base_url)
-        response = client.post(f"{base_url}{endpoint}", json=payload, headers=headers)
+        response = client.post(f"{base_url}{endpoint}", json={"params":payload}, headers=headers)
         response.raise_for_status()
 
     data = response.json()
