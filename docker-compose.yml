@@ -1,0 +1,9 @@
+services:
+  cs-ai-bridge-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cs-ai-bridge-mcp
+    restart: unless-stopped
+    env_file:
+      - .env
