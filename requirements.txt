@@ -1,6 +1,7 @@
+fastapi
 fastmcp
 httpx
 pydantic
 python-dotenv
 redis
-uvicorn
+uvicorn[standard]
