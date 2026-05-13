@@ -20,6 +20,21 @@ def get_timeout_seconds() -> float:
     return float(os.getenv("CS_AI_BRIDGE_TIMEOUT", "30"))
 
 
+def get_llm_api_base_url() -> str:
+    return normalize_base_url(
+        os.getenv("CS_AI_BRIDGE_LLM_API_BASE_URL", "http://localhost:8080")
+    )
+
+
+def get_llm_api_timeout_seconds() -> float:
+    return float(
+        os.getenv(
+            "CS_AI_BRIDGE_LLM_API_TIMEOUT",
+            os.getenv("CS_AI_BRIDGE_LLM_TIMEOUT", "120"),
+        )
+    )
+
+
 def load_extra_headers() -> dict[str, str]:
     raw = os.getenv("CS_AI_BRIDGE_HEADERS_JSON", "").strip()
     if not raw:
