@@ -1,7 +1,7 @@
 # CS AI Bridge MCP project.
 #
 # Host URL: http://localhost:8071
-# Start ../api first when MCP needs to call the AI API.
+# Start this project when the AI API needs MCP tools.
 
 name: cs-ai-bridge-mcp
 
@@ -19,8 +19,6 @@ services:
       - .env.example
       - path: .env
         required: false
-    environment:
-      CS_AI_BRIDGE_LLM_API_BASE_URL: "${CS_AI_BRIDGE_LLM_API_BASE_URL:-http://host.docker.internal:8072}"
     networks:
       - cs-ai-bridge-mcp
 

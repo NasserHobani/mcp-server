@@ -128,8 +128,8 @@ def validate_create_vals_with_schema(
             )
         if not isinstance(info, dict):
             raise ValueError(f"Invalid schema field definition for '{field_name}'.")
-        # if info.get("readonly"):
-        #     raise ValueError(f"Cannot set readonly field '{field_name}' via MCP create.")
+        if info.get("readonly"):
+            raise ValueError(f"Cannot set readonly field '{field_name}' via MCP create.")
         # Mirror Odoo `_field_schema_entry` ``can_write`` (older cached schemas omit key).
         if info.get("can_write") is False:
             raise ValueError(f"Field '{field_name}' is not writable via MCP create (schema mutation).")
@@ -179,8 +179,8 @@ def validate_write_vals_with_schema(
             )
         if not isinstance(info, dict):
             raise ValueError(f"Invalid schema field definition for '{field_name}'.")
-        # if info.get("readonly"):
-        #     raise ValueError(f"Cannot set readonly field '{field_name}' via MCP write.")
+        if info.get("readonly"):
+            raise ValueError(f"Cannot set readonly field '{field_name}' via MCP write.")
         if info.get("can_write") is False:
             raise ValueError(f"Field '{field_name}' is not writable via MCP write (schema mutation).")
 

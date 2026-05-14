@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 from . import config
-from . import llm_client
 from .app import mcp
 from . import odoo_client
 from . import schema_redis
@@ -140,46 +139,6 @@ def mcp_write(
     if tenant is not None:
         payload["tenant"] = tenant
     return odoo_client.post_json("/cs_ai_bridge/mcp/write", payload)
-
-
-@mcp.tool(
-    name="llm_chat_completion",
-    description=(
-        "Call the configured AI model through the CS AI Bridge LLM API. "
-        "Redis AI config is selected by tenant when provided."
-    ),
-)
-def llm_chat_completion(
-    prompt: str | None = None,
-    messages: list[dict[str, Any]] | None = None,
-    tenant: str | None = None,
-    provider: str | None = None,
-    model: str | None = None,
-    temperature: float | None = None,
-    max_tokens: int | None = None,
-    extra_body: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    if messages is None:
-        if prompt is None or not prompt.strip():
-            raise ValueError("Provide either 'messages' or a non-empty 'prompt'.")
-        messages = [{"role": "user", "content": prompt}]
-    elif not messages:
-        raise ValueError("'messages' must not be empty.")
-
-    payload: dict[str, Any] = dict(extra_body or {})
-    payload["messages"] = messages
-    if tenant is not None:
-        payload["tenant"] = tenant
-    if provider is not None:
-        payload["provider"] = provider
-    if model is not None:
-        payload["model"] = model
-    if temperature is not None:
-        payload["temperature"] = temperature
-    if max_tokens is not None:
-        payload["max_tokens"] = max_tokens
-
-    return llm_client.chat_completion(payload)
 
 
 @mcp.tool(
